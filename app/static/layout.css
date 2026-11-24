@@ -1,0 +1,31 @@
+.p0838 .shell { display:block; }
+.p0838 .rail { display:flex; align-items:center; gap:20px; border-right:0; border-bottom:1px solid var(--line); padding:10px 18px; position:sticky; top:0; z-index:3; }
+.p0838 .rail-label,.p0838 .rail-note { display:none; }
+.p0838 #stage-nav { flex-direction:row; overflow:auto; }
+.p0838 #stage-nav button { white-space:nowrap; border:1px solid var(--line); }
+.p0838 .board { grid-template-columns:repeat(12,minmax(0,1fr)); align-items:start; }
+.p0838 #panel-table{grid-column:span 8}.p0838 #panel-chart{grid-column:span 4}.p0838 #panel-issues{grid-column:span 5}.p0838 #panel-ledger{grid-column:span 3}.p0838 #panel-review{grid-column:span 4}
+.p0838 .metric strong{color:var(--accent)}
+.p0838 .panel{border-top:3px solid var(--accent)}
+
+@media (max-width: 980px) {
+  .p0838 .board { grid-template-columns: minmax(0,1fr) !important; grid-template-areas: none !important; }
+  .p0838 .board > * { grid-column: auto !important; grid-row: auto !important; grid-area: auto !important; }
+  .p0838 .kpis { grid-template-columns: repeat(2,minmax(0,1fr)) !important; }
+}
+@media (max-width: 680px) {
+  .p0838 .shell { display: block !important; }
+  .p0838 .rail { height: auto !important; min-height: 0 !important; position: static !important; padding: 10px 12px !important; }
+  .p0838 .rail::after { display: none !important; }
+  .p0838 .rail-label, .p0838 .rail-note { display: none !important; }
+  .p0838 #stage-nav { flex-direction: row !important; flex-wrap: nowrap !important; overflow-x: auto !important; }
+  .p0838 #stage-nav button { width: auto !important; border-left: 0 !important; border-bottom: 2px solid transparent !important; white-space: nowrap; }
+  .p0838 #stage-nav button[aria-pressed="true"] { border-bottom-color: var(--accent) !important; }
+  .p0838 .toolbar { padding: 16px 14px !important; }
+  .p0838 .toolbar h1 { font-size: clamp(22px,8vw,38px); }
+  .p0838 main { padding: 8px !important; }
+  .p0838 .kpis { grid-template-columns: repeat(2,minmax(0,1fr)) !important; }
+  .p0838 .metric:nth-child(2) { transform: none !important; }
+  .p0838 .panel, .p0838 .metric { min-width: 0 !important; }
+  .p0838 .table-wrap { max-width: 100%; overflow-x: auto; }
+}
