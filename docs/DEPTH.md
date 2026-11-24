@@ -2,7 +2,8 @@
 
 - 规模：中型
 - 核心规则：骑行跨日按零点拆段，合计暂停时长从最早分段起扣除，每段按自然日封顶。
-- 样例：`sample_data/dirty.csv` 触发异常，`sample_data/clean.csv` 可完成签发。
+- 账户规则：同一账户按自然日共用日封顶，签发认收以剩余额度为限，多收列待退，跨日额度分日计算。
+- 样例：`sample_data/dirty.csv` 触发异常，`sample_data/clean.csv` 可完成签发；`shared_a.csv` 与 `shared_b.csv` 两批分开不超额、合并触顶。
 
 ## 功能模块
 
@@ -15,6 +16,7 @@
 | M5 运行对账 | 核对来源行、采信、隔离、重复与计算条目 | `POST /api/stages/reconcile` | `app/reconcile/ledger.py` | `tests/test_reconcile.py` |
 | M6 批次复核 | 带版本号签发或暂缓，拒绝陈旧复核 | `POST /api/runs/{id}/review` | `app/review/service.py` | `tests/test_review.py` |
 | M7 证据交付 | 仅在签发后输出可校验的复核证据 | `GET /api/runs/{id}/evidence` | `app/evidence/render.py` | `tests/test_evidence.py` |
+| M8 账户额度 | 按账户×自然日预留额度，认收受限、多收待退 | `POST /api/runs/{id}/review`、`GET /api/quota/ledger` | `app/domain/quota.py`、`app/review/store.py` | `tests/test_quota.py`、`tests/test_quota_issuance.py` |
 
 ## 输入陷阱
 

@@ -6,6 +6,7 @@ from app.catalog import SPEC
 from app.domain.calculate import calculate_rows
 from app.domain.decision import decide_rows
 from app.domain.prepare import prepare_rows
+from app.domain.quota import plan_quota, summarize
 from app.intake.service import load
 from app.reconcile.ledger import build_ledger
 
@@ -41,6 +42,17 @@ def pipeline(profile="dirty", path=None, upto="证据交付"):
         ledger = build_ledger(intake, prepared, prepare_issues, results)
     intake["counts"]["prepared"] = len(prepared)
     intake["counts"]["computed"] = len(results)
+    # 额度计划是签发前的预演：尚未占用账本，按空余额计算本批若单独签发的认收/待退
+    quota = None
+    if results:
+        row_plans, account_days = plan_quota(results, {})
+        quota = summarize(row_plans, account_days)
+        plan_by_trip = {plan["trip_id"]: plan for plan in row_plans}
+        for item in results:
+            plan = plan_by_trip.get(str(item.get(SPEC["key"], "")))
+            if plan:
+                item["recognized_cents"] = plan["recognized_cents"]
+                item["refund_cents"] = plan["refund_cents"]
     issues = intake["issues"] + prepare_issues
     summary = {"PASS": 0, "REVIEW": 0, "REJECT": 0}
     for item in results:
@@ -73,6 +85,8 @@ def pipeline(profile="dirty", path=None, upto="证据交付"):
         "chart": chart,
         "summary": summary,
         "ledger": ledger,
+        "quota": quota,
+        "results": results,
         "stages": [{"id": "intake", "name": SPEC["stages"][0]},
                    {"id": "prepare", "name": SPEC["stages"][1]},
                    {"id": "calculate", "name": SPEC["stages"][2]},

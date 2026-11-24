@@ -25,7 +25,8 @@ def catalog():
                        ["intake", "prepare", "calculate", "decision", "reconcile", "review", "evidence"],
                        SPEC["stages"])],
                    chart=SPEC["chart"], result_columns=SPEC["result_columns"],
-                   columns=SPEC["columns"], samples=["dirty", "clean"])
+                   columns=SPEC["columns"], daily_cap_cents=SPEC["daily_cap_cents"],
+                   samples=["dirty", "clean", "shared_a", "shared_b"])
 
 
 @api.post("/api/stages/<stage_id>")
@@ -68,8 +69,13 @@ def evidence(run_id):
     return jsonify(render(run))
 
 
+@api.get("/api/quota/ledger")
+def quota_ledger():
+    return jsonify(daily_cap_cents=SPEC["daily_cap_cents"], entries=store().quota_ledger_entries())
+
+
 @api.get("/api/examples/<profile>")
 def example(profile):
-    if profile not in {"clean", "dirty"}:
+    if profile not in {"clean", "dirty", "shared_a", "shared_b"}:
         abort(404)
     return send_file(SAMPLES / f"{profile}.csv", as_attachment=True)

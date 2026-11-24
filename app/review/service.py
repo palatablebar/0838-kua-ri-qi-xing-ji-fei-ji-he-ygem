@@ -1,5 +1,6 @@
 import json
 
+from app.domain.quota import plan_quota, summarize
 from app.errors import DomainIssue
 from app.review.policy import approval_allowed
 
@@ -9,16 +10,28 @@ def create_run(store, payload):
     return serialize(row)
 
 
+def _build_planner(payload):
+    results = payload.get("results", [])
+
+    def planner(balance):
+        row_plans, account_days = plan_quota(results, balance)
+        return row_plans, account_days, summarize(row_plans, account_days)
+
+    return planner
+
+
 def approve(store, run_id, decision, comment, expected_revision):
     row = store.get(run_id)
     if row is None:
         raise DomainIssue("RUN_NOT_FOUND", 404)
     payload = json.loads(row["payload"])
-    if decision == "APPROVED" and not approval_allowed(payload):
-        raise DomainIssue("GATE_BLOCKED", 409)
     if decision not in {"APPROVED", "HELD"}:
         raise DomainIssue("BAD_REQUEST")
-    row, problem = store.review(run_id, decision, comment.strip(), expected_revision)
+    if decision == "APPROVED" and not approval_allowed(payload):
+        raise DomainIssue("GATE_BLOCKED", 409)
+    planner = _build_planner(payload)
+    row, problem, _ = store.approve_with_quota(
+        run_id, decision, comment.strip(), expected_revision, planner)
     if problem == "missing":
         raise DomainIssue("RUN_NOT_FOUND", 404)
     if problem == "stale":

@@ -1,0 +1,3 @@
+trip_id,account_id,bike_id,start_at,end_at,paused_minutes,distance_m,wallet_debit,plan
+S3,A100,B13,2026-11-20 19:00,2026-11-20 19:15,0,2100,1.50,standard
+S4,A200,B14,2026-11-20 23:40,2026-11-21 00:20,0,6100,5.00,standard

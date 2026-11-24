@@ -53,6 +53,32 @@
       '<div class="ledger-row"><span>' + esc(values.metric_field) + '</span><strong>' + esc(values.metric_total) + '</strong></div>' +
       values.checks.map(function (check) { return '<div class="ledger-row"><span>' + esc(check.label) + '</span><strong class="' + (check.ok ? 'check-ok' : 'check-bad') + '">' + (check.ok ? '通过' : '异常') + '</strong></div>'; }).join('');
   }
+  function money(cents) { return (Number(cents || 0) / 100).toFixed(2); }
+  function renderQuota(data) {
+    var quota = data.quota;
+    if (!quota) { $('quota-summary').innerHTML = '<p class="empty">计算后显示额度计划</p>'; $('quota-head').innerHTML = ''; $('quota-body').innerHTML = ''; return; }
+    $('quota-cap').textContent = '账户日封顶 ' + money(quota.daily_cap_cents) + ' 元';
+    $('quota-summary').innerHTML = [
+      ['实扣合计', money(quota.debit_total)], ['认收合计', money(quota.recognized_total)],
+      ['待退合计', money(quota.refund_total)], ['触顶账户日', quota.capped_account_days.length]
+    ].map(function (row) {
+      return '<div class="ledger-row"><span>' + row[0] + '</span><strong class="' +
+        (row[0] === '待退合计' && Number(quota.refund_total) > 0 ? 'check-bad' : '') + '">' + row[1] + '</strong></div>';
+    }).join('');
+    var head = ['骑行', '账户', '实扣', '认收', '待退', '自然日明细'];
+    $('quota-head').innerHTML = '<tr>' + head.map(function (name) { return '<th>' + name + '</th>'; }).join('') + '</tr>';
+    $('quota-body').innerHTML = quota.rows.length ? quota.rows.map(function (row) {
+      var detail = row.days.map(function (day) {
+        return esc(day.day) + ' · 认收 ' + money(day.recognized_cents) +
+          (day.refund_cents ? ' · <span class="check-bad">待退 ' + money(day.refund_cents) + '</span>' : '');
+      }).join('<br>');
+      return '<tr><td>' + esc(row.trip_id) + '</td><td>' + esc(row.account_id) + '</td>' +
+        '<td class="num">' + money(row.debit_cents) + '</td>' +
+        '<td class="num">' + money(row.recognized_cents) + '</td>' +
+        '<td class="num' + (row.refund_cents ? ' check-bad' : '') + '">' + money(row.refund_cents) + '</td>' +
+        '<td><small>' + detail + '</small></td></tr>';
+    }).join('') : '<tr><td class="empty" colspan="6">无额度条目</td></tr>';
+  }
   function render(data) {
     state.payload = data;
     $('chart-label').textContent = Object.values(state.resultColumns)[0];
@@ -63,6 +89,7 @@
     renderRows(data);
     renderIssues(data);
     renderLedger(data);
+    renderQuota(data);
     window.renderChart($('chart'), data.chart && data.chart.length ? (state.kind || 'bars') : 'bars', data.chart || []);
   }
   function stageButtons(stages) {
@@ -111,6 +138,7 @@
       });
       state.run = run;
       state.approved = run.status === 'APPROVED';
+      render(run);
       $('run-status').textContent = run.status + ' · rev ' + run.revision;
       $('revision').textContent = 'rev ' + run.revision;
       $('sign').disabled = true;
